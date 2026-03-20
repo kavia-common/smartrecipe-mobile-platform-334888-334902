@@ -51,6 +51,24 @@ class Settings(BaseSettings):
             return ["*"]
         return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
 
+    @property
+    def cors_allow_credentials(self) -> bool:
+        """Return whether credentialed CORS should be enabled for the configured origins."""
+        return "*" not in self.allowed_origins_list
+
+    @property
+    def normalized_cors_origins(self) -> list[str]:
+        """Return safe CORS origins for FastAPI middleware configuration.
+
+        Contract:
+        - Input: raw ALLOWED_ORIGINS environment variable.
+        - Output: explicit origins list suitable for CORSMiddleware.
+        - Invariant: when credentials are allowed, the list never contains a wildcard.
+        """
+        if self.cors_allow_credentials:
+            return self.allowed_origins_list
+        return ["*"]
+
 
 # PUBLIC_INTERFACE
 @lru_cache(maxsize=1)
